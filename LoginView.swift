@@ -4,9 +4,10 @@ struct LoginView: View {
     @State private var email = ""
     @State private var password = ""
     @State private var isCreatingAccount = false
-    @State private var isAuthenticated = false
-    @State private var isCustomizingAvatar = false
-    @Binding var snapshotImage: UIImage?
+    @State private var showAlert = false
+    @State private var alertMessage = ""
+    @State private var isLoading = false
+    @Binding var isAuthenticated: Bool
 
     var body: some View {
         VStack {
@@ -14,6 +15,8 @@ struct LoginView: View {
                 .font(.largeTitle).bold()
 
             TextField("Email", text: $email)
+                .keyboardType(.emailAddress)
+                .autocapitalization(.none)
                 .textFieldStyle(RoundedBorderTextFieldStyle())
                 .padding()
                 .font(.body)
@@ -23,16 +26,18 @@ struct LoginView: View {
                 .padding()
                 .font(.body)
 
-            Button(action: {
-                // Authentication logic goes here
-                isAuthenticated = true
-            }) {
-                Text(isCreatingAccount ? "Create Account" : "Login")
-                    .foregroundColor(.white)
+            if isLoading {
+                ProgressView()
                     .padding()
-                    .background(Color.blue)
-                    .cornerRadius(10)
-                    .font(.headline)
+            } else {
+                Button(action: fetchUserData) {
+                    Text(isCreatingAccount ? "Create Account" : "Login")
+                        .foregroundColor(.white)
+                        .padding()
+                        .background(Color.blue)
+                        .cornerRadius(10)
+                        .font(.headline)
+                }
             }
 
             Button("Switch to \(isCreatingAccount ? "Login" : "Create Account")") {
@@ -40,27 +45,41 @@ struct LoginView: View {
             }
             .font(.subheadline)
             .padding()
-
-            NavigationLink(destination: CustomTabView(), isActive: $isAuthenticated) {
-                EmptyView()
-            }
-            
-            NavigationLink(destination: AvatarCustomizationView(), isActive: $isCustomizingAvatar) {
-                EmptyView()
-            }
-
-            Button("Customize Avatar") {
-                isCustomizingAvatar = true
-            }
-            .font(.headline)
-            .padding()
         }
         .padding()
+        .alert(isPresented: $showAlert) {
+            Alert(title: Text("Error"), message: Text(alertMessage), dismissButton: .default(Text("OK")))
+        }
     }
-}
 
-struct LoginView_Previews: PreviewProvider {
-    static var previews: some View {
-        LoginView(snapshotImage: .constant(nil))
+    private func fetchUserData() {
+        guard !email.isEmpty, !password.isEmpty else {
+            alertMessage = "Email and Password cannot be empty."
+            showAlert = true
+            return
+        }
+        
+        isLoading = true
+        
+        let networkManager = NetworkManager()
+        networkManager.fetchUserData(email: email, password: password) { loginResponse in
+            DispatchQueue.main.async {
+                isLoading = false
+                if let loginResponse = loginResponse {
+                    // Compare fetched userPassword with input password
+                    if loginResponse.userPassword == password {
+                        // Authentication successful
+                        isAuthenticated = true
+                    } else {
+                        // Authentication failed due to incorrect password
+                        alertMessage = "Authentication failed. Incorrect password."
+                        showAlert = true
+                    }
+                } else {
+                    alertMessage = "Failed to fetch user data. Please try again."
+                    showAlert = true
+                }
+            }
+        }
     }
 }
