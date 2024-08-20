@@ -1,18 +1,27 @@
 import SwiftUI
 
-struct LoginView: View {
-    @Binding var isAuthenticated: Bool
+struct CreateAccountView: View {
+    @State private var userName = ""
+    @State private var userNickName = ""
     @State private var email = ""
     @State private var password = ""
     @State private var showAlert = false
     @State private var alertMessage = ""
     @State private var isLoading = false
-    @State private var showCreateAccount = false
+    @Binding var isAuthenticated: Bool
 
     var body: some View {
         VStack {
-            Text("Login")
+            Text("Create Account")
                 .font(.largeTitle)
+                .padding()
+            
+            TextField("Username", text: $userName)
+                .textFieldStyle(RoundedBorderTextFieldStyle())
+                .padding()
+            
+            TextField("Nickname", text: $userNickName)
+                .textFieldStyle(RoundedBorderTextFieldStyle())
                 .padding()
             
             TextField("Email", text: $email)
@@ -29,36 +38,25 @@ struct LoginView: View {
                 ProgressView()
                     .padding()
             } else {
-                Button(action: login) {
-                    Text("Login")
+                Button(action: createAccount) {
+                    Text("Create Account")
                         .foregroundColor(.white)
                         .padding()
                         .background(Color.blue)
                         .cornerRadius(10)
                 }
                 .padding()
-                
-                Button(action: {
-                    showCreateAccount = true
-                }) {
-                    Text("Create Account")
-                        .foregroundColor(.blue)
-                        .padding()
-                }
             }
         }
         .padding()
         .alert(isPresented: $showAlert) {
             Alert(title: Text("Error"), message: Text(alertMessage), dismissButton: .default(Text("OK")))
         }
-        .sheet(isPresented: $showCreateAccount) {
-            CreateAccountView(isAuthenticated: $isAuthenticated)
-        }
     }
 
-    private func login() {
-        guard !email.isEmpty, !password.isEmpty else {
-            alertMessage = "Email and Password cannot be empty."
+    private func createAccount() {
+        guard !userName.isEmpty, !userNickName.isEmpty, !email.isEmpty, !password.isEmpty else {
+            alertMessage = "All fields are required."
             showAlert = true
             return
         }
@@ -66,13 +64,13 @@ struct LoginView: View {
         isLoading = true
 
         let networkManager = NetworkManager()
-        networkManager.loginUser(email: email, password: password) { success, error in
+        networkManager.createAccount(userName: userName, userNickName: userNickName, email: email, password: password) { success, error in
             DispatchQueue.main.async {
                 isLoading = false
                 if success {
                     isAuthenticated = true
                 } else {
-                    alertMessage = error?.localizedDescription ?? "Login failed for an unknown reason."
+                    alertMessage = error?.localizedDescription ?? "Account creation failed for an unknown reason."
                     showAlert = true
                 }
             }

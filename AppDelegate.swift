@@ -29,8 +29,10 @@ struct MatchUpv2App: App {
             } else if !isAuthenticated {
                 LoginView(isAuthenticated: $isAuthenticated)
             } else {
-                CustomTabView()
+                CustomTabView(isAuthenticated: $isAuthenticated)
             }
         }
     }
 }
+
+// Ensure your other views (LoadingScreenView, LoginView, CustomTabView) are correctly defined.

@@ -2,6 +2,7 @@ import SwiftUI
 import CoreLocation
 
 struct CustomTabView: View {
+    @Binding var isAuthenticated: Bool  // Binding to control authentication state
     @State private var selectedTab = 0
     @State private var selectedCoordinate: IdentifiableCoordinate? = nil
     @State private var isTabBarVisible = true
@@ -33,7 +34,7 @@ struct CustomTabView: View {
                         Text("Messages")
                     }
 
-                ProfileView()
+                ProfileView(isAuthenticated: $isAuthenticated) // Pass isAuthenticated binding
                     .tag(3)
                     .tabItem {
                         Image(systemName: "person.crop.circle.fill")
@@ -142,6 +143,6 @@ struct CustomTabView: View {
 
 struct CustomTabView_Previews: PreviewProvider {
     static var previews: some View {
-        CustomTabView()
+        CustomTabView(isAuthenticated: .constant(true))  // Provide a binding for preview
     }
 }
